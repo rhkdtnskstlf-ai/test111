@@ -49,7 +49,7 @@ checkout = (selected_date + timedelta(days=1)).strftime("%Y-%m-%d")
 # ----------------------------
 # 2️⃣ 엑셀 파일 및 시트 선택
 # ----------------------------
-excel_path = r"D:\공유문서\객실팀 공유폴더\야간조폴더\온라인 경쟁 호텔.xlsx"
+excel_path = r"\\객실프론트1\공유문서\객실팀 공유폴더\야간조폴더\온라인 경쟁 호텔.xlsx"
 sheet_name = f"{str(selected_date.year)[-2:]}.{selected_date.month:02d}"
 
 if not os.path.exists(excel_path):
