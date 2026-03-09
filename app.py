@@ -98,13 +98,11 @@ else:
     if st.button("최저가 수집 & 엑셀 업데이트"):
         st.write("Selenium 실행 중... 잠시만 기다려주세요.")
 
-        # ----------------------------
-        # Selenium headless 모드 설정
-        # ----------------------------
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
+
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
         # ----------------------------
@@ -130,25 +128,32 @@ else:
         status_text = st.empty()
         total_hotels = len(hotel_ids)
 
+        hotel_list = list(hotel_ids.keys())
+
         # ----------------------------
         # 호텔별 가격 수집
         # ----------------------------
-        for idx, (col_idx, hotel) in enumerate(enumerate(hotel_ids.keys(), start=3), start=1):
+        for idx, hotel in enumerate(hotel_list):
+
+            col_idx = idx + 3
             type_key = None
+
             if "농심(하이디럭스)" in hotel:
                 type_key = "하이디럭스"
 
             url = make_url(hotel_ids[hotel], checkin, checkout, type_key)
             driver.get(url)
-            status_text.text(f"{hotel} 가격 수집 중... ({idx}/{total_hotels})")
+
+            status_text.text(f"{hotel} 가격 수집 중... ({idx+1}/{total_hotels})")
 
             try:
                 if type_key == "하이디럭스":
-                    # 하이디럭스는 수작업 필요, 자동 수집 안내
+
                     ws.cell(row=ws_row_idx, column=col_idx, value="직접입력")
-                    status_text.text(f"{hotel}: 하이디럭스는 직접 입력 필요")
+                    status_text.text(f"{hotel}: 하이디럭스 직접 입력 필요")
+
                 else:
-                    # 일반 호텔 / 농심 디럭스
+
                     price_elements = WebDriverWait(driver, 10).until(
                         EC.presence_of_all_elements_located(
                             (By.CSS_SELECTOR, "div.common_PriceInfo__vuU30 em.common_price__iYQ6j")
@@ -156,6 +161,7 @@ else:
                     )
 
                     prices = []
+
                     for el in price_elements:
                         try:
                             num = int(re.sub("[^0-9]", "", el.text))
@@ -166,15 +172,17 @@ else:
                     if prices:
                         ws.cell(row=ws_row_idx, column=col_idx, value=min(prices))
                         status_text.text(f"{hotel}: {min(prices)}원 입력 완료")
+
                     else:
                         ws.cell(row=ws_row_idx, column=col_idx, value="마감")
                         status_text.text(f"{hotel}: 마감")
 
             except Exception as e:
-                ws.cell(row=ws_row_idx, column=col_idx, value="마감")
-                status_text.text(f"{hotel}: 마감 (오류 발생 - {e})")
 
-            progress_bar.progress(idx / total_hotels)
+                ws.cell(row=ws_row_idx, column=col_idx, value="마감")
+                status_text.text(f"{hotel}: 마감 (오류 발생)")
+
+            progress_bar.progress((idx+1) / total_hotels)
             time.sleep(1)
 
         driver.quit()
